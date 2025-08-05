@@ -127,19 +127,34 @@ app.MapGet("/api/test/protected", [Authorize] (HttpContext context) => new
 });
 ```
 
-## 🛠️ Development Notes
-
--   **HTTPS Required**: Auth0 requires HTTPS for security (configured for `localhost:5001`)
--   **Session Usage**: Only used for PKCE flow parameters, not for token storage
--   **Token Storage**: Tokens are managed client-side in Swagger UI for testing
--   **Error Handling**: Basic error responses for invalid authentication attempts
-
 ## 📚 Learning Resources
 
--   [Auth0 Documentation](https://auth0.com/docs)
--   [PKCE RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
--   [JWT Introduction](https://jwt.io/introduction)
--   [ASP.NET Core Authentication](https://docs.microsoft.com/en-us/aspnet/core/security/authentication/)
+### 🎯 **Essential Reading** (Start Here)
+
+-   **[OAuth 2.0 Simplified](https://aaronparecki.com/oauth-2-simplified/)** - Best beginner-friendly OAuth 2.0 explanation
+-   **[JWT Introduction](https://jwt.io/introduction)** - Understanding JSON Web Tokens with examples
+-   **[Auth0 Getting Started](https://auth0.com/docs/get-started)** - Official Auth0 beginner guide
+
+### 🔧 **Practical Tools** (For Development)
+
+-   **[JWT.io Debugger](https://jwt.io/)** - Decode and inspect JWT tokens (paste your tokens here!)
+-   **[Auth0 Management Dashboard](https://manage.auth0.com/)** - Configure your Auth0 applications
+-   **[ASP.NET Core Authentication Docs](https://docs.microsoft.com/en-us/aspnet/core/security/authentication/)** - Microsoft's official guide
+
+### 🛡️ **Security Concepts** (Important to Understand)
+
+-   **[PKCE Flow Explained](https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow-with-proof-key-for-code-exchange-pkce)** - Why PKCE matters for security
+-   **[OAuth 2.0 Security Best Practices](https://auth0.com/blog/oauth-2-best-practices-for-native-apps/)** - Common security pitfalls and how to avoid them
+
+### 💡 **When You Get Stuck**
+
+-   **[Auth0 Community](https://community.auth0.com/)** - Ask questions and get help from other developers
+-   **[Stack Overflow - Auth0 Tag](https://stackoverflow.com/questions/tagged/auth0)** - Search existing solutions to common problems
+
+### 🎥 **Video Learning** (If You Prefer Visual)
+
+-   **[OAuth 2.0 and OpenID Connect](https://www.youtube.com/watch?v=996OiexHze0)** - 1-hour comprehensive explanation
+-   **[PKCE Explained Visually](https://www.youtube.com/watch?v=CHzERullHe8)** - Short video on PKCE flow
 
 ## 🤝 Contributing
 
@@ -150,48 +165,3 @@ This is an educational example. Feel free to fork, modify, and use as a starting
 MIT License - feel free to use this code in your projects.
 
 ---
-
-**Perfect for developers learning Auth0 integration or as a starting point for secure API development.**
-
-### Configuration Classes
-
-The project uses strongly-typed configuration with:
-
--   `Auth0Settings` - Auth0 domain, client credentials, and audience
--   `CorsSettings` - CORS policy configuration for cross-origin requests
-
-## Project Structure
-
-```
-TestApp/
-├── Program.cs                          # Main application with Auth0 + PKCE setup
-├── TestApp.csproj                      # Project file with required packages
-├── Configuration/
-│   └── AppSettings.cs                  # Strongly-typed configuration classes
-├── appsettings.json                    # Production configuration
-├── appsettings.Development.json        # Development configuration
-└── README.md                          # This documentation
-```
-
-## Dependencies
-
--   **Microsoft.AspNetCore.Authentication.JwtBearer** (9.0.0) - JWT token validation
--   **Microsoft.IdentityModel.Tokens** (9.0.0) - Token validation parameters
--   **Swashbuckle.AspNetCore** (7.2.0) - Swagger/OpenAPI documentation
--   **System.Text.Json** (9.0.0) - JSON serialization for token processing
-
-## Security Features
-
--   **PKCE Flow Implementation** - Prevents authorization code interception
--   **Session-based State Management** - Secure OAuth state verification
--   **CORS Configuration** - Controlled cross-origin access
--   **JWT Token Validation** - Auth0 issuer and audience verification
--   **Cryptographically Secure Random Generation** - For PKCE parameters
-
-## UI Enhancements
-
--   **Modern Button Design** - Gradient backgrounds with hover effects
--   **Responsive Layout** - Clean, monochromatic design
--   **Interactive Elements** - Smooth transitions and visual feedback
--   **Clear Instructions** - Step-by-step guidance for all authentication methods
--   **Real-time Token Display** - JSON-formatted token information
