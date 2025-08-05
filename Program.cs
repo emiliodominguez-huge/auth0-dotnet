@@ -113,10 +113,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         // Token validation parameters - these are the security checks performed on every request
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,        // Ensures token was issued by Auth0 (prevents token from other issuers)
-            ValidateAudience = true,      // Ensures token was intended for this API (prevents token reuse)
-            ValidateLifetime = true,      // Ensures token hasn't expired (checks 'exp' claim)
-            ValidateIssuerSigningKey = true  // Verifies token signature using Auth0's public keys
+            ValidateIssuer = true, // Ensures token was issued by Auth0 (prevents token from other issuers)
+            ValidateAudience = true, // Ensures token was intended for this API (prevents token reuse)
+            ValidateLifetime = true, // Ensures token hasn't expired (checks 'exp' claim)
+            ValidateIssuerSigningKey = true // Verifies token signature using Auth0's public keys
         };
     });
 
@@ -266,8 +266,8 @@ if (app.Environment.IsDevelopment())
 // Authentication & Authorization Middleware Pipeline
 // Order matters! These must be configured in the correct sequence for security to work properly
 
-app.UseCors(corsSettings.PolicyName);  // Handle CORS before authentication
-app.UseSession();                      // Enable session state for PKCE flow parameters
+app.UseCors(corsSettings.PolicyName); // Handle CORS before authentication
+app.UseSession(); // Enable session state for PKCE flow parameters
 
 // Authentication middleware - validates JWT tokens and populates HttpContext.User
 // This runs before authorization and extracts/validates the Bearer token from the Authorization header
@@ -285,7 +285,7 @@ app.UseAuthorization();
 app.MapGet("/auth/login", (HttpContext context) =>
 {
     // Generate PKCE parameters for secure authorization code exchange
-    var codeVerifier = GenerateCodeVerifier();      // Random string stored securely on client
+    var codeVerifier = GenerateCodeVerifier(); // Random string stored securely on client
     var codeChallenge = GenerateCodeChallenge(codeVerifier);  // SHA256 hash sent to Auth0
     var state = Guid.NewGuid().ToString("N")[..16]; // CSRF protection parameter
     var nonce = Guid.NewGuid().ToString("N")[..16]; // Replay attack protection (OIDC requirement)
@@ -297,15 +297,15 @@ app.MapGet("/auth/login", (HttpContext context) =>
 
     // Build Auth0 authorization URL with all required OIDC + PKCE parameters
     var authUrl = $"https://{auth0Settings.Domain}/authorize?" +
-        $"response_type=code&" +  // Request authorization code (not tokens directly)
+        $"response_type=code&" + // Request authorization code (not tokens directly)
         $"client_id={auth0Settings.ClientId}&" +
         $"redirect_uri={Uri.EscapeDataString($"{context.Request.Scheme}://{context.Request.Host}/auth/callback")}&" +
-        $"scope={Uri.EscapeDataString("openid profile email")}&" +  // OIDC scopes for user info
-        $"audience={Uri.EscapeDataString(auth0Settings.Audience)}&" +  // API identifier for access token
-        $"state={state}&" +           // CSRF protection
-        $"nonce={nonce}&" +          // Replay protection
-        $"code_challenge={codeChallenge}&" +     // PKCE challenge (SHA256 of verifier)
-        $"code_challenge_method=S256";           // PKCE method (SHA256)
+        $"scope={Uri.EscapeDataString("openid profile email")}&" + // OIDC scopes for user info
+        $"audience={Uri.EscapeDataString(auth0Settings.Audience)}&" + // API identifier for access token
+        $"state={state}&" + // CSRF protection
+        $"nonce={nonce}&" + // Replay protection
+        $"code_challenge={codeChallenge}&" + // PKCE challenge (SHA256 of verifier)
+        $"code_challenge_method=S256"; // PKCE method (SHA256)
 
     // Redirect user to Auth0 for authentication
     context.Response.Redirect(authUrl);
@@ -315,10 +315,10 @@ app.MapGet("/auth/login", (HttpContext context) =>
 app.MapGet("/auth/callback", async (HttpContext context) =>
 {
     // Extract authorization response parameters from Auth0
-    var code = context.Request.Query["code"].FirstOrDefault();           // Authorization code to exchange
-    var state = context.Request.Query["state"].FirstOrDefault();         // State for CSRF validation
-    var storedState = context.Session.GetString("state");                // Our original state value
-    var codeVerifier = context.Session.GetString("code_verifier");       // PKCE code verifier
+    var code = context.Request.Query["code"].FirstOrDefault(); // Authorization code to exchange
+    var state = context.Request.Query["state"].FirstOrDefault(); // State for CSRF validation
+    var storedState = context.Session.GetString("state"); // Our original state value
+    var codeVerifier = context.Session.GetString("code_verifier"); // PKCE code verifier
 
     // Security validations before proceeding with token exchange
     if (string.IsNullOrEmpty(code) || state != storedState || string.IsNullOrEmpty(codeVerifier))
@@ -332,12 +332,12 @@ app.MapGet("/auth/callback", async (HttpContext context) =>
     using var httpClient = new HttpClient();
     var tokenRequest = new FormUrlEncodedContent(new[]
     {
-        new KeyValuePair<string, string>("grant_type", "authorization_code"),  // OAuth 2.0 grant type
+        new KeyValuePair<string, string>("grant_type", "authorization_code"), // OAuth 2.0 grant type
         new KeyValuePair<string, string>("client_id", auth0Settings.ClientId),
-        new KeyValuePair<string, string>("client_secret", auth0Settings.ClientSecret),  // Client authentication
-        new KeyValuePair<string, string>("code", code),                        // Authorization code from callback
+        new KeyValuePair<string, string>("client_secret", auth0Settings.ClientSecret), // Client authentication
+        new KeyValuePair<string, string>("code", code), // Authorization code from callback
         new KeyValuePair<string, string>("redirect_uri", $"{context.Request.Scheme}://{context.Request.Host}/auth/callback"),
-        new KeyValuePair<string, string>("code_verifier", codeVerifier)        // PKCE verifier proves we initiated the flow
+        new KeyValuePair<string, string>("code_verifier", codeVerifier) // PKCE verifier proves we initiated the flow
     });
 
     var response = await httpClient.PostAsync($"https://{auth0Settings.Domain}/oauth/token", tokenRequest);
