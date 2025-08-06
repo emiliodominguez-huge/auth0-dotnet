@@ -1,12 +1,21 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
-using TestApp.Configuration;
 using Microsoft.OpenApi.Models;
+using System.Text.Json;
+using TestApp.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 var corsSettings = builder.Configuration.GetSection("Cors").Get<CorsSettings>() ?? new CorsSettings();
 var auth0Settings = builder.Configuration.GetSection("Auth0").Get<Auth0Settings>() ?? new Auth0Settings();
+
+// Debug
+// Console.WriteLine($"Auth0 Configuration:");
+// Console.WriteLine($"Domain: {auth0Settings.Domain}");
+// Console.WriteLine($"ClientId: {auth0Settings.ClientId}");
+// Console.WriteLine($"Audience: {auth0Settings.Audience}");
+// Console.WriteLine($"Authority: https://{auth0Settings.Domain}/");
+// Console.WriteLine();
 
 builder.Services.AddControllers();
 
@@ -36,7 +45,7 @@ builder.Services.AddSwaggerGen(options =>
     // Add JWT Bearer authentication to Swagger
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...\"",
+        Description = "Enter your JWT token in the format: Bearer {your-token-here}",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
@@ -64,37 +73,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(corsSettings.PolicyName, policy =>
     {
-        if (corsSettings.AllowedOrigins.Contains("*"))
-        {
-            policy.AllowAnyOrigin();
-        }
-        else
-        {
-            policy.WithOrigins(corsSettings.AllowedOrigins);
-        }
-
-        if (corsSettings.AllowedMethods.Contains("*"))
-        {
-            policy.AllowAnyMethod();
-        }
-        else
-        {
-            policy.WithMethods(corsSettings.AllowedMethods);
-        }
-
-        if (corsSettings.AllowedHeaders.Contains("*"))
-        {
-            policy.AllowAnyHeader();
-        }
-        else
-        {
-            policy.WithHeaders(corsSettings.AllowedHeaders);
-        }
-
-        if (corsSettings.AllowCredentials)
-        {
-            policy.AllowCredentials();
-        }
+        // IMPORTANT: This is meant for demo purposes only
+        // NOT an ideal CORS policy for production
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
     });
 });
 
@@ -137,17 +120,34 @@ if (app.Environment.IsDevelopment())
         options.HeadContent = $@"
             <style>
                 .auth0-login-section {{
-                    background: #f8f9fa;
-                    border: 1px solid #dee2e6;
+                    background-color: #1a1a1a;
+                    border: 1px solid #333333;
                     border-radius: 8px;
-                    padding: 24px;
-                    margin: 20px 0;
+                    padding: 32px;
+                    margin: 24px 0;
                     text-align: center;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+                    h3 {{
+                        color: #ffffff !important;
+                        font-size: 20px;
+                        font-weight: 600;
+                        margin: 0 0 8px 0;
+                        letter-spacing: -0.3px;
+                    }}
+
+                    p {{
+                        color: #b0b0b0 !important;
+                        font-size: 14px;
+                        margin: 0 0 24px 0;
+                        line-height: 1.4;
+                    }}
                 }}
+
                 .auth0-login-btn {{
-                    background: linear-gradient(135deg, #495057 0%, #343a40 100%);
-                    color: #fff !important;
+                    background-color: #ffffff !important;
+                    color: #000000 !important;
                     border: none;
                     padding: 12px 24px;
                     border-radius: 6px;
@@ -156,108 +156,76 @@ if (app.Environment.IsDevelopment())
                     display: inline-block;
                     font-size: 14px;
                     font-weight: 500;
-                    margin: 8px 4px;
-                    transition: all 0.3s ease;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                    min-width: 140px;
+                    margin: 0 0 24px 0;
+                    transition: all 0.2s ease;
+                    min-width: 200px;
+                    font-family: inherit;
+
+                    &:hover {{
+                        background-color: #e6e6e6;
+                        text-decoration: none;
+                        color: #000000;
+                        transform: translateY(-1px);
+                    }}
+
+                    &:active {{
+                        transform: translateY(0);
+                        background-color: #cccccc;
+                    }}
                 }}
-                .auth0-login-btn:hover {{
-                    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.25);
-                }}
-                .auth0-login-btn:active {{
-                    transform: translateY(0);
-                }}
-                .auth0-login-btn.secondary {{
-                    background: linear-gradient(135deg, #868e96 0%, #6c757d 100%);
-                }}
-                .auth0-login-btn.secondary:hover {{
-                    background: linear-gradient(135deg, #adb5bd 0%, #868e96 100%);
-                }}
+
                 .token-info {{
-                    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-                    border: 1px solid #ced4da;
-                    border-radius: 8px;
-                    padding: 18px;
-                    margin: 18px 0;
+                    background-color: #2a2a2a;
+                    border: 1px solid #404040;
+                    border-radius: 6px;
+                    padding: 20px;
+                    margin: 0;
                     font-size: 12px;
-                    color: #495057;
+                    color: #b0b0b0;
                     text-align: left;
-                    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-                }}
-                .token-info code {{
-                    background: #e9ecef;
-                    padding: 2px 6px;
-                    border-radius: 3px;
-                    font-family: 'Courier New', monospace;
-                    font-size: 11px;
+                    line-height: 1.5;
+
+                    strong {{
+                        color: #ffffff;
+                        font-weight: 600;
+                    }}
                 }}
             </style>
             
             <script>
-                window.addEventListener('load', function() {{
-                    setTimeout(function() {{
+                window.addEventListener('load', () => {{
+                    setTimeout(() => {{
                         const infoSection = document.querySelector('.information-container .info');
+                        
                         if (infoSection && !document.querySelector('.auth0-login-section')) {{
                             const authSection = document.createElement('div');
+                            
                             authSection.className = 'auth0-login-section';
                             authSection.innerHTML = `
                                 <h3>Authentication</h3>
+                                
                                 <p>Login with Auth0 to get your access token</p>
+                                
                                 <a href='/auth/login' class='auth0-login-btn'>
                                     🔐 Login with Auth0
                                 </a>
+                                
                                 <div class='token-info'>
                                     <strong>How it works:</strong><br>
                                     1. Click 'Login with Auth0' to start PKCE authentication flow<br>
                                     2. Complete Auth0 login (redirects to auth0.com)<br>
-                                    3. Return automatically with token set in Authorization<br>
-                                    4. Test protected endpoints immediately<br><br>
+                                    3. Copy the token from the success page<br>
+                                    4. Come back here and click 'Authorize' to paste the token<br>
+                                    5. Test protected endpoints immediately<br><br>
                                     
                                     <strong>Debugging:</strong><br>
                                     Server console shows token exchange process in real-time
                                 </div>
                             `;
+
                             infoSection.appendChild(authSection);
                         }}
                     }}, 1000);
-                }});
-                
-                // Auto-set token from URL parameter
-                window.addEventListener('load', function() {{
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const token = urlParams.get('token');
-                    console.log('Token from URL:', token ? token.substring(0, 20) + '...' : 'None');
-                    
-                    if (token) {{
-                        console.log('Setting token automatically...');
-                        setTimeout(function() {{
-                            const authorizeBtn = document.querySelector('.authorize .btn');
-                            if (authorizeBtn) {{
-                                console.log('Clicking authorize button...');
-                                authorizeBtn.click();
-                                setTimeout(function() {{
-                                    const tokenInput = document.querySelector('input[placeholder=""Value""]');
-                                    if (tokenInput) {{
-                                        tokenInput.value = 'Bearer ' + token;
-                                        console.log('Token set in input field');
-                                        const authorizeModalBtn = document.querySelector('.auth-btn-wrapper .btn-done');
-                                        if (authorizeModalBtn) {{
-                                            authorizeModalBtn.click();
-                                            console.log('Authorization completed');
-                                        }}
-                                    }} else {{
-                                        console.log('Token input field not found');
-                                    }}
-                                }}, 500);
-                            }} else {{
-                                console.log('Authorize button not found');
-                            }}
-                            window.history.replaceState({{}}, document.title, window.location.pathname);
-                            alert('Token has been set! You can now test protected endpoints.');
-                        }}, 1500);
-                    }}
                 }});
             </script>";
     });
@@ -345,25 +313,139 @@ app.MapGet("/auth/callback", async (HttpContext context) =>
     if (response.IsSuccessStatusCode)
     {
         var tokenResponse = await response.Content.ReadAsStringAsync();
-        Console.WriteLine($"Token Response: {tokenResponse}"); // Debug log
 
-        // Parse token response (contains access_token, id_token, token_type, expires_in)
-        var tokenData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(tokenResponse);
+        // Parse token response first
+        var tokenData = JsonSerializer.Deserialize<Dictionary<string, object>>(tokenResponse);
+
+        // Debug
+        // Console.WriteLine($"Token Response:\n{JsonSerializer.Serialize(tokenData, new JsonSerializerOptions
+        // { WriteIndented = true })}");
 
         if (tokenData?.TryGetValue("access_token", out var accessToken) == true)
         {
-            var tokenString = accessToken?.ToString() ?? "";
-            Console.WriteLine($"Access Token Retrieved: {(tokenString.Length > 50 ? tokenString[..50] + "..." : tokenString)}"); // Debug log
-
             // Clean up session - remove temporary PKCE parameters (security best practice)
             context.Session.Remove("code_verifier");
             context.Session.Remove("state");
 
-            // Redirect to Swagger UI with token as URL parameter for automatic authorization
-            // The JavaScript in Swagger will automatically set this token in the Authorization header
-            var swaggerUrl = $"/swagger?token={accessToken}";
-            Console.WriteLine($"Redirecting to: {swaggerUrl}"); // Debug log
-            return Results.Redirect(swaggerUrl);
+            // Create a simple HTML page showing the token
+            var html = $@"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Auth0 Token Received</title>
+                <style>
+                    body {{ 
+                        font-family: Arial, sans-serif; 
+                        max-width: 800px; 
+                        margin: 50px auto; 
+                        padding: 20px; 
+                    }}
+
+                    .container {{ 
+                        background-color: #f8f9fa; 
+                        border-radius: 8px; 
+                        padding: 30px; 
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+                    }}
+
+                    .success {{ 
+                        color: #28a745; 
+                        font-size: 24px; 
+                        margin-bottom: 20px; 
+                    }}
+
+                    .instructions {{ 
+                        background-color: #e9ecef; 
+                        padding: 15px; 
+                        border-radius: 4px; 
+                        margin: 20px 0; 
+                    }}
+
+                    .token-box {{ 
+                        background-color: #fff; 
+                        border: 2px solid #28a745; 
+                        border-radius: 6px; 
+                        padding: 15px; 
+                        margin: 20px 0;
+                        word-break: break-all; 
+                        font-family: monospace; 
+                    }}
+
+                    .copy-btn {{ 
+                        display: block; 
+                        background-color: #007bff; 
+                        color: white; 
+                        border: none; 
+                        padding: 10px 20px; 
+                        border-radius: 4px; 
+                        cursor: pointer; 
+                        margin: 0 5px 10px; 
+
+                        &:hover {{ 
+                            background-color: #0056b3; 
+                        }}
+                    }}
+
+                    .swagger-btn {{ 
+                        display: inline-block; 
+                        background-color: #28a745; 
+                        color: white; 
+                        text-decoration: none; 
+                        padding: 12px 24px; 
+                        border-radius: 4px; 
+                        margin: 10px 5px; 
+
+                        &:hover {{ 
+                            background-color: #218838; 
+                            text-decoration: none; 
+                            color: white; 
+                        }}
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='success'>&#x2705; Authentication Successful!</div>
+                    
+                    <p>Your Auth0 access token has been generated. Copy the token below and paste it into Swagger UI:</p>
+                    
+                    <div class='token-box' id='tokenBox'>Bearer {accessToken}</div>
+                    
+                    <button class='copy-btn' onclick='copyToken()'>&#x1F4CB; Copy token</button>
+                    <a href='/swagger' class='swagger-btn'>&#x1F680; Go back to Swagger UI</a>
+                    
+                    <div class='instructions'>
+                        <strong>How to use in Swagger:</strong><br>
+                        1. Click ""Open Swagger UI"" button above<br>
+                        2. Click the ""Authorize"" button in Swagger<br>
+                        3. Paste the copied token (including ""Bearer "") into the Value field<br>
+                        4. Click ""Authorize"" then ""Close""<br>
+                        5. Test the protected endpoints!
+                    </div>
+                </div>
+                
+                <script>
+                    function copyToken() {{
+                        const tokenText = document.getElementById('tokenBox').textContent;
+                        
+                        navigator.clipboard.writeText(tokenText).then(() => {{
+                            alert('Token copied to clipboard!');
+                        }}).catch(() => {{
+                            // Fallback for older browsers
+                            const textArea = document.createElement('textarea');
+                            textArea.value = tokenText;
+                            document.body.appendChild(textArea);
+                            textArea.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(textArea);
+                            alert('Token copied to clipboard!');
+                        }});
+                    }}
+                </script>
+            </body>
+            </html>";
+
+            return Results.Content(html, "text/html");
         }
     }
 
